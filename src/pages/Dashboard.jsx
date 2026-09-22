@@ -29,7 +29,7 @@ export default function Dashboard() {
   if (error) {
     return (
       <Note tone="critical" title="Could not reach the API">
-        {error}. Check that the server is running on port 4000 and MongoDB is up.
+        {error}
       </Note>
     );
   }

@@ -108,6 +108,26 @@ hard refresh instead of 404ing.
 Once this app has a URL, set `CORS_ORIGIN` on the **API** project to it and
 redeploy the API — otherwise the browser will block every request.
 
+## Troubleshooting
+
+**"Could not reach the API …"** — the browser blocks the request before any
+response arrives. In order of likelihood:
+
+1. **The API deployment is protected.** Vercel Authentication answers every
+   request with a redirect to `vercel.com/sso-api`, so the fetch never reaches
+   Express. Check with `curl -i https://<your-api>.vercel.app/api/health` — a
+   `302` to `vercel.com/sso-api` means it is still protected. Turn it off in the
+   API project under **Settings → Deployment Protection**.
+2. **`CORS_ORIGIN` on the API does not list this site's origin.** The browser
+   discards the response and reports a network error rather than a CORS one.
+3. **`VITE_API_URL` is wrong, or was changed without rebuilding.** It is inlined
+   at build time: locally you must restart `npm run dev` after editing `.env`,
+   and on Vercel you must redeploy after changing the variable.
+4. **Locally, the API is not running** on port 4000.
+
+Point 3 catches people out most often — editing `.env` while the dev server is
+running has no effect at all until you restart it.
+
 ## Honest limits
 
 - **There is no authentication.** The role switcher is a demo affordance so one

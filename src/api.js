@@ -39,7 +39,29 @@ async function request(path, options = {}) {
     headers['Content-Type'] = 'application/json';
   }
 
-  const res = await fetch(apiUrl(path), { ...options, headers });
+  let res;
+  try {
+    res = await fetch(apiUrl(path), { ...options, headers });
+  } catch {
+    /*
+     * fetch only throws for network-level failures, and the browser hides the
+     * reason for security. In practice it is almost always one of a short list,
+     * so name them rather than reporting a bare "NetworkError".
+     */
+    throw new Error(
+      API_BASE
+        ? 'Could not reach the API at ' +
+          API_BASE +
+          '. Check that the URL is right, that the deployment is public ' +
+          '(Vercel: Settings -> Deployment Protection -> Vercel Authentication ' +
+          'must be Disabled, or requests get redirected to a login page), and ' +
+          'that CORS_ORIGIN on the API allows ' +
+          window.location.origin +
+          '.'
+        : 'Could not reach the API on http://localhost:4000. Check the server is running.',
+    );
+  }
+
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;
   if (!res.ok) throw new Error(data?.error || 'Request failed (' + res.status + ')');
