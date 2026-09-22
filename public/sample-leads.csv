@@ -1,0 +1,11 @@
+name,phone,email,city,state,course,preferred_languages
+Vignesh Ramesh,9876500001,vignesh@example.com,Madurai,Tamil Nadu,Full Stack Development,Tamil|English
+Sonali Ghosh,9876500002,sonali@example.com,Kolkata,West Bengal,Data Science,Bengali
+Harsh Patel,9876500003,harsh@example.com,Rajkot,Gujarat,Cloud and DevOps,
+Fatima Sheikh,9876500004,fatima@example.com,Lucknow,Uttar Pradesh,Digital Marketing,Urdu|Hindi
+Devika Menon,9876500005,devika@example.com,Thrissur,Kerala,AI and Machine Learning,Malayalam
+Rohit Yadav,9876500006,rohit@example.com,,,Java Programming,
+Sandhya Rao,9876500007,sandhya@example.com,Vijayawada,Andhra Pradesh,Python for Beginners,Telugu
+Bikram Sahoo,9876500008,bikram@example.com,Bhubaneswar,Odisha,Data Science,Odia
+,9876500009,missing@example.com,Pune,Maharashtra,UI UX Design,Marathi
+Anand Kumar,9876500010,anand@example.com,Bengaluru,Karnataka,Full Stack Development,Klingon

@@ -1,0 +1,42 @@
+# Self-contained: this folder is its own repository, so it cannot rely on an
+# ignore file one level up. Patterns without a leading slash match at any depth.
+
+# dependencies
+node_modules/
+.npm/
+
+# build output
+dist/
+build/
+.vite/
+*.tsbuildinfo
+
+# environment - never commit real values, but keep the example.
+# Note that Vite inlines VITE_* variables into the built bundle, so nothing
+# secret belongs in them in the first place.
+.env
+.env.*
+!.env.example
+
+# vercel
+.vercel/
+
+# logs
+*.log
+npm-debug.log*
+logs/
+
+# test / coverage
+coverage/
+
+# editors and OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# local scratch
+*.local
+tmp/
