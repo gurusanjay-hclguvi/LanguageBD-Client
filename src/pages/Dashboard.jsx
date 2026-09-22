@@ -34,17 +34,16 @@ export default function Dashboard() {
     );
   }
 
-  const { kpis, statusCounts, sourceCounts, coverageGaps, languageCoverage, recentCalls, projection } =
-    data;
+  const { kpis, statusCounts, sourceCounts, coverageGaps, languageCoverage, recentCalls } = data;
 
   return (
-    <div className={'transition-opacity ' + (refreshing ? 'opacity-50' : '')}>
+    <div className={'transition-opacity duration-200 ' + (refreshing ? 'opacity-50' : '')}>
       <PageHeader
-        title="Routing overview"
-        sub="Every lead goes to a BD who shares a language with them — or is held back and counted, never handed to someone who cannot speak to them."
+        title="Overview"
+        sub="Every lead goes to a BD who shares a language with them."
         actions={
           <button type="button" className="btn btn-primary" onClick={runRouting} disabled={routing}>
-            {routing ? 'Routing…' : 'Run routing'}
+            {routing ? 'Routing...' : 'Run Routing'}
           </button>
         }
       />
@@ -52,17 +51,9 @@ export default function Dashboard() {
       {result && !result.error && (
         <div className="mb-8">
           <Note title="Routing finished" onClose={() => setResult(null)}>
-            Matched {result.assigned} of {result.processed} waiting leads, average score{' '}
-            {result.avgMatchScore}.
+            Matched <strong>{result.assigned}</strong> of {result.processed} leads.
             {result.unroutable > 0 && (
-              <>
-                {' '}
-                {result.unroutable} could not be routed:{' '}
-                {Object.entries(result.gaps)
-                  .map(([code, n]) => n + ' ' + languageLabel(code))
-                  .join(', ')}
-                .
-              </>
+              <> {result.unroutable} could not be routed.</>
             )}
           </Note>
         </div>
@@ -75,38 +66,23 @@ export default function Dashboard() {
         </div>
       )}
 
-      <StatRow>
-        <Stat label="Leads" value={kpis.totalLeads} hint={kpis.waiting + ' still waiting'} />
-        <Stat
-          label="Matched"
-          value={kpis.routedRate}
-          unit="%"
-          hint={kpis.routed + ' leads · average score ' + kpis.avgMatchScore + '/100'}
-        />
-        <Stat
-          label="Nobody can call"
-          value={kpis.unroutable}
-          tone={kpis.unroutable ? 'critical' : 'neutral'}
-          hint="No BD on the roster speaks their language"
-        />
-        <Stat
-          label="Wasted calls avoided"
-          value={kpis.callsSaved}
-          hint="Estimated against round-robin routing"
-        />
-      </StatRow>
+      <div className="rounded-xl border border-rule bg-white p-6">
+        <StatRow>
+          <Stat label="Leads" value={kpis.totalLeads} hint={kpis.waiting + ' waiting'} />
+          <Stat label="Matched" value={kpis.routedRate} unit="%" hint={kpis.routed + ' routed'} />
+          <Stat label="Unroutable" value={kpis.unroutable} hint="No BD speaks their language" />
+          <Stat label="Calls Saved" value={kpis.callsSaved} hint="Estimated" />
+        </StatRow>
+      </div>
 
       {coverageGaps.length > 0 && (
-        <div className="mt-8">
+        <div className="mt-6">
           <Note tone="critical" title="Coverage gaps">
-            <ul className="mt-1 space-y-1">
+            <ul className="mt-2 space-y-2">
               {coverageGaps.map((gap) => (
-                <li key={gap.code}>
-                  <span className="font-medium text-ink">{gap.label}</span> — {gap.primaryLeads}{' '}
-                  leads, nobody on the roster speaks it.{' '}
-                  <Link to="/team" className="link">
-                    Add {article(gap.label)} {gap.label} speaker
-                  </Link>
+                <li key={gap.code} className="text-[15px]">
+                  <span className="font-bold text-ink">{gap.label}</span> — {gap.primaryLeads} leads, no BD available.{' '}
+                  <Link to="/team" className="link">Add {article(gap.label)} {gap.label} speaker</Link>
                 </li>
               ))}
             </ul>
@@ -114,96 +90,54 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="mt-12 space-y-12">
-        <Section
-          title="Where every lead stands"
-          sub="The whole pipeline, including the leads we are deliberately holding back"
-        >
+      <div className="mt-10 space-y-10">
+        <Section title="Pipeline" sub="Where every lead stands">
           <PipelineBar statusCounts={statusCounts} />
 
-          <dl className="mt-10 grid grid-cols-3 gap-8 border-t border-rule pt-6">
+          <dl className="mt-8 grid grid-cols-2 gap-6 border-t border-rule pt-6 sm:grid-cols-4">
             {[
-              { key: 'explicit', label: 'Declared on the form' },
+              { key: 'confirmed', label: 'Confirmed on call' },
+              { key: 'explicit', label: 'Declared on form' },
               { key: 'inferred', label: 'Inferred from region' },
-              { key: 'unknown', label: 'No signal at all' },
+              { key: 'unknown', label: 'Unknown' },
             ].map(({ key, label }) => (
-              <div key={key}>
-                <dt className="text-[11px] uppercase tracking-[0.07em] text-ink-3">{label}</dt>
-                <dd className="mt-1.5 text-[22px] font-medium leading-none text-ink">
-                  {sourceCounts[key] ?? 0}
-                </dd>
+              <div key={key} className="rounded-lg bg-panel p-4">
+                <dt className="text-[13px] font-semibold uppercase tracking-[0.05em] text-ink-3">{label}</dt>
+                <dd className="mt-2 text-[28px] font-bold leading-none text-ink">{sourceCounts[key] ?? 0}</dd>
               </div>
             ))}
           </dl>
-          <p className="mt-4 text-[12px] text-ink-3">
-            How we know each learner&apos;s language. An inferred language is a guess from their
-            region and is labelled as one everywhere it appears.
-          </p>
         </Section>
 
         <LanguageCoverageChart data={languageCoverage} />
 
-        <Section title="Latest calls" sub="Straight from the BD call log">
+        <Section title="Recent Calls" sub="Latest call outcomes">
           {recentCalls.length ? (
-            <table className="w-full">
-              <tbody>
-                {recentCalls.map((call) => (
-                  <tr key={call.id}>
-                    <td className="td text-ink">{call.lead}</td>
-                    <td className="td">{call.bd}</td>
-                    <td
-                      className={
-                        'td ' + (call.outcome === 'language_barrier' ? 'font-medium text-critical' : '')
-                      }
-                    >
-                      {OUTCOME_LABELS[call.outcome]}
-                    </td>
-                    <td className="td pr-0 text-right text-ink-3">{relativeTime(call.createdAt)}</td>
+            <div className="overflow-hidden rounded-xl border border-rule">
+              <table className="w-full">
+                <thead className="bg-panel">
+                  <tr>
+                    <th className="th px-5 py-4">Lead</th>
+                    <th className="th px-5 py-4">BD</th>
+                    <th className="th px-5 py-4">Outcome</th>
+                    <th className="th px-5 py-4 text-right">When</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {recentCalls.map((call) => (
+                    <tr key={call.id} className="border-t border-rule">
+                      <td className="td px-5 py-4 font-medium text-ink">{call.lead}</td>
+                      <td className="td px-5 py-4">{call.bd}</td>
+                      <td className="td px-5 py-4">{OUTCOME_LABELS[call.outcome]}</td>
+                      <td className="td px-5 py-4 text-right text-ink-3">{relativeTime(call.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
-            <Empty title="No calls logged yet">
-              Switch to a BD from the menu at the top right and log a call outcome.
-            </Empty>
+            <Empty title="No calls logged">Switch to a BD and log a call.</Empty>
           )}
-        </Section>
-
-        <Section title="What language routing is worth" sub={projection.note}>
-          <div className="grid gap-8 sm:grid-cols-3">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.07em] text-ink-3">
-                Round-robin, ignoring language
-              </p>
-              <p className="mt-2 text-[28px] font-medium leading-none text-critical">
-                {projection.naiveWastedRate}%
-              </p>
-              <p className="mt-2 text-[12px] leading-snug text-ink-3">
-                about {projection.naiveWastedCalls} of {projection.leadsConsidered} calls would hit a
-                language wall
-              </p>
-            </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.07em] text-ink-3">
-                Language-matched routing
-              </p>
-              <p className="mt-2 text-[28px] font-medium leading-none text-ink">0%</p>
-              <p className="mt-2 text-[12px] leading-snug text-ink-3">
-                a lead is only ever assigned to someone who shares a language
-              </p>
-            </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.07em] text-ink-3">
-                Measured barrier rate
-              </p>
-              <p className="mt-2 text-[28px] font-medium leading-none text-ink">{kpis.barrierRate}%</p>
-              <p className="mt-2 text-[12px] leading-snug text-ink-3">
-                {kpis.barrierCalls} of {kpis.totalCalls} logged calls, including calls made before
-                routing was switched on
-              </p>
-            </div>
-          </div>
         </Section>
       </div>
     </div>

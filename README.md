@@ -41,12 +41,16 @@ configuring.
 4. **Switch role (top right) to a BD.** The whole app becomes their queue: only
    learners they can actually speak to, each row leading with *"Open the call in
    Malayalam."* Inferred languages carry a warning to confirm on the call.
-5. **Log a call → Language barrier.** The lead leaves the queue and goes back in
-   the pool; the barrier rate on the Overview moves.
+5. **Log a call → Language barrier.** You must record what the learner actually
+   spoke. That answer is promoted to the **confirmed** tier — the strongest one,
+   above what they wrote on the form — the BD who failed is barred from that lead,
+   and it goes back in the pool for someone who can genuinely serve it. The
+   barrier rate on the Overview moves.
 6. **Impact.** The measured barrier rate over time, demand vs. BD coverage per
    language, load spread across the team, and the estimated wasted calls avoided
    — labelled as an estimate, next to the measured number, so the two are never
-   confused.
+   confused. Plus **inference accuracy by state**: once BDs confirm languages on
+   calls, this grades the region guesses and names the states worth correcting.
 
 Then: **Team → Add BD** with Bengali, re-run routing, and watch the coverage gap
 close.

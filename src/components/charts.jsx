@@ -14,39 +14,33 @@ import {
 } from 'recharts';
 import { languageLabel, OUTCOME_LABELS, STATUS_LABELS } from '../lib/format.js';
 
-/*
- * Chart conventions used throughout this file:
- *   - one measure per plot and one axis - never two y-scales;
- *   - thin marks, hairline grid, recessive axes; no dashed rules anywhere;
- *   - a single series needs no legend (the heading names it);
- *   - the accent carries data, red carries the one problem state, and red is
- *     always paired with a word so colour is never doing the work alone;
- *   - every chart has a table-view twin, so no value is reachable by hover only.
- */
-
-const AXIS = { fill: 'var(--color-ink-3)', fontSize: 11 };
+/* Chart colors - green accent only */
+const AXIS = { fill: 'var(--color-ink)', fontSize: 14, fontWeight: 500 };
 const RULE = 'var(--color-rule)';
 const DATA = 'var(--color-accent)';
-const PROBLEM = 'var(--color-critical)';
+const DATA_LIGHT = '#86efac'; /* Light green */
+const DATA_LIGHTER = '#bbf7d0'; /* Lighter green */
+const INK = 'var(--color-ink)';
+const INK_2 = 'var(--color-ink-2)';
+const INK_3 = 'var(--color-ink-3)';
 
-/** A chart block: heading, plot, and a text toggle to its table equivalent. */
-export function ChartBlock({ title, sub, height = 260, columns, rows, footnote, children }) {
+export function ChartBlock({ title, sub, height = 300, columns, rows, footnote, children }) {
   const [view, setView] = useState('chart');
 
   return (
-    <section className="border-t border-rule pt-6">
-      <div className="mb-5 flex items-start justify-between gap-6">
+    <section className="border-t border-rule pt-8">
+      <div className="mb-6 flex items-start justify-between gap-6">
         <div>
-          <h2 className="text-[13px] font-semibold text-ink">{title}</h2>
-          {sub && <p className="mt-0.5 max-w-xl text-[12px] leading-relaxed text-ink-3">{sub}</p>}
+          <h2 className="text-[17px] font-bold text-ink">{title}</h2>
+          {sub && <p className="mt-1 max-w-xl text-[15px] leading-relaxed text-ink-3">{sub}</p>}
         </div>
         {columns && (
           <button
             type="button"
             onClick={() => setView(view === 'chart' ? 'table' : 'chart')}
-            className="shrink-0 text-[12px] text-ink-3 transition-colors hover:text-ink"
+            className="shrink-0 text-[14px] font-medium text-accent hover:underline"
           >
-            {view === 'chart' ? 'Table' : 'Chart'}
+            {view === 'chart' ? 'View Table' : 'View Chart'}
           </button>
         )}
       </div>
@@ -54,22 +48,20 @@ export function ChartBlock({ title, sub, height = 260, columns, rows, footnote, 
       {view === 'chart' ? (
         <div style={{ height }}>{children}</div>
       ) : (
-        <div className="max-h-[340px] overflow-auto">
+        <div className="max-h-[400px] overflow-auto rounded-xl border border-rule">
           <table className="w-full">
-            <thead>
+            <thead className="bg-panel">
               <tr>
                 {columns.map((c) => (
-                  <th key={c} className="th">
-                    {c}
-                  </th>
+                  <th key={c} className="th px-5 py-4">{c}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {rows.map((row, i) => (
-                <tr key={i}>
+                <tr key={i} className="border-t border-rule">
                   {row.map((cell, j) => (
-                    <td key={j} className={'td ' + (j ? 'tabular' : 'text-ink')}>
+                    <td key={j} className={'td px-5 py-4 ' + (j ? 'tabular' : 'font-medium text-ink')}>
                       {cell}
                     </td>
                   ))}
@@ -80,7 +72,7 @@ export function ChartBlock({ title, sub, height = 260, columns, rows, footnote, 
         </div>
       )}
 
-      {footnote && <p className="mt-4 text-[12px] text-ink-3">{footnote}</p>}
+      {footnote && <p className="mt-4 text-[15px] text-ink-3">{footnote}</p>}
     </section>
   );
 }
@@ -88,18 +80,13 @@ export function ChartBlock({ title, sub, height = 260, columns, rows, footnote, 
 function TooltipBox({ active, payload, label, render }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-md border border-rule bg-paper px-3 py-2 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.12)]">
-      <p className="font-medium text-ink">{label}</p>
-      <div className="mt-0.5 space-y-0.5 text-ink-2">{render(payload[0].payload)}</div>
+    <div className="rounded-lg border border-rule bg-white px-4 py-3 text-[15px] shadow-lg">
+      <p className="font-bold text-ink">{label}</p>
+      <div className="mt-1 space-y-1 text-ink-2">{render(payload[0].payload)}</div>
     </div>
   );
 }
 
-/**
- * Lead demand per language, one measure on one axis. The BD headcount rides
- * along as a direct label rather than as a second y-scale, and a language
- * nobody can serve is red AND reads "no BD".
- */
 export function LanguageCoverageChart({ data }) {
   const rows = data
     .filter((d) => d.leads > 0)
@@ -107,29 +94,28 @@ export function LanguageCoverageChart({ data }) {
     .map((d) => ({
       ...d,
       name: languageLabel(d.code),
-      // Precomputed, because a bar label formatter only reliably sees its own value.
       bdLabel: d.bds ? d.bds + (d.bds > 1 ? ' BDs' : ' BD') : 'no BD',
     }));
 
   return (
     <ChartBlock
-      title="Languages our leads are asking for"
-      sub="Leads per language, with the number of BDs who speak it"
-      height={Math.max(220, rows.length * 32 + 36)}
-      columns={['Language', 'Leads', 'BDs who speak it', 'Daily capacity']}
-      rows={rows.map((r) => [r.name, r.leads, r.bds, r.capacity])}
-      footnote="Red marks a language with nobody on the roster to call it."
+      title="Languages Our Leads Speak"
+      sub="Leads per language with available BDs"
+      height={Math.max(280, rows.length * 40 + 40)}
+      columns={['Language', 'Leads', 'BDs', 'Capacity']}
+      rows={rows.map((r) => [r.name, r.leads, r.bds || '-', r.capacity || '-'])}
+      footnote="Languages without a BD are shown in black."
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={rows}
           layout="vertical"
-          margin={{ top: 2, right: 64, bottom: 2, left: 2 }}
-          barCategoryGap={7}
+          margin={{ top: 4, right: 80, bottom: 4, left: 4 }}
+          barCategoryGap={8}
         >
           <CartesianGrid horizontal={false} stroke={RULE} strokeDasharray="0" />
           <XAxis type="number" tick={AXIS} axisLine={{ stroke: RULE }} tickLine={false} allowDecimals={false} />
-          <YAxis type="category" dataKey="name" width={92} tick={AXIS} axisLine={false} tickLine={false} />
+          <YAxis type="category" dataKey="name" width={110} tick={AXIS} axisLine={false} tickLine={false} />
           <Tooltip
             cursor={{ fill: 'var(--color-panel)' }}
             content={(p) => (
@@ -137,22 +123,18 @@ export function LanguageCoverageChart({ data }) {
                 {...p}
                 render={(d) => (
                   <>
-                    <p>{d.leads} leads</p>
-                    <p>
-                      {d.bds
-                        ? d.bds + ' BD' + (d.bds > 1 ? 's' : '') + ' speak it · ' + d.capacity + ' calls/day'
-                        : 'No BD speaks this language'}
-                    </p>
+                    <p><strong>{d.leads}</strong> leads</p>
+                    <p>{d.bds ? d.bds + ' BDs · ' + d.capacity + ' calls/day' : 'No BD available'}</p>
                   </>
                 )}
               />
             )}
           />
-          <Bar dataKey="leads" radius={[0, 3, 3, 0]} barSize={13} isAnimationActive={false}>
+          <Bar dataKey="leads" radius={[0, 4, 4, 0]} barSize={18} isAnimationActive={false}>
             {rows.map((r) => (
-              <Cell key={r.code} fill={r.bds ? DATA : PROBLEM} />
+              <Cell key={r.code} fill={r.bds ? DATA : INK} />
             ))}
-            <LabelList dataKey="bdLabel" position="right" fontSize={11} fill="var(--color-ink-3)" />
+            <LabelList dataKey="bdLabel" position="right" fontSize={14} fill={INK_2} />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -160,7 +142,6 @@ export function LanguageCoverageChart({ data }) {
   );
 }
 
-/** Measured language-barrier rate over time. One series, so no legend. */
 export function BarrierTrendChart({ data }) {
   const rows = data.map((d) => ({
     ...d,
@@ -169,21 +150,20 @@ export function BarrierTrendChart({ data }) {
 
   return (
     <ChartBlock
-      title="Calls lost to a language barrier"
-      sub="Share of logged calls that ended because the learner and the BD had no language in common"
-      columns={['Day', 'Calls', 'Language barriers', 'Barrier rate %']}
+      title="Language Barrier Rate Over Time"
+      sub="Percentage of calls that hit a language barrier"
+      columns={['Day', 'Calls', 'Barriers', 'Rate %']}
       rows={rows.map((r) => [r.label, r.calls, r.barriers, r.barrierRate])}
-      footnote="Measured from the call log - not a projection."
     >
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={rows} margin={{ top: 12, right: 44, bottom: 2, left: 0 }}>
+        <LineChart data={rows} margin={{ top: 16, right: 60, bottom: 4, left: 4 }}>
           <CartesianGrid vertical={false} stroke={RULE} strokeDasharray="0" />
-          <XAxis dataKey="label" tick={AXIS} axisLine={{ stroke: RULE }} tickLine={false} minTickGap={20} />
+          <XAxis dataKey="label" tick={AXIS} axisLine={{ stroke: RULE }} tickLine={false} minTickGap={30} />
           <YAxis
             tick={AXIS}
             axisLine={false}
             tickLine={false}
-            width={40}
+            width={50}
             unit="%"
             domain={[0, (max) => Math.max(20, Math.ceil(max / 10) * 10)]}
           />
@@ -194,10 +174,8 @@ export function BarrierTrendChart({ data }) {
                 {...p}
                 render={(d) => (
                   <>
-                    <p>{d.barrierRate}% hit a language barrier</p>
-                    <p>
-                      {d.barriers} of {d.calls} calls
-                    </p>
+                    <p><strong>{d.barrierRate}%</strong> hit a barrier</p>
+                    <p>{d.barriers} of {d.calls} calls</p>
                   </>
                 )}
               />
@@ -207,19 +185,19 @@ export function BarrierTrendChart({ data }) {
             type="linear"
             dataKey="barrierRate"
             stroke={DATA}
-            strokeWidth={2}
-            dot={{ r: 3, fill: 'var(--color-paper)', stroke: DATA, strokeWidth: 2 }}
-            activeDot={{ r: 4.5, strokeWidth: 2 }}
+            strokeWidth={3}
+            dot={{ r: 5, fill: 'var(--color-paper)', stroke: DATA, strokeWidth: 2 }}
+            activeDot={{ r: 6, strokeWidth: 2 }}
             isAnimationActive={false}
           >
             <LabelList
               dataKey="barrierRate"
               position="right"
-              fontSize={11}
-              fill="var(--color-ink-3)"
+              fontSize={14}
+              fill={INK_2}
               content={({ index, x, y, value }) =>
                 index === rows.length - 1 ? (
-                  <text x={x + 8} y={y + 4} fill="var(--color-ink-3)" fontSize={11}>
+                  <text x={x + 10} y={y + 5} fill={INK_2} fontSize={14} fontWeight={500}>
                     {value}%
                   </text>
                 ) : null
@@ -232,15 +210,14 @@ export function BarrierTrendChart({ data }) {
   );
 }
 
-/** Assigned leads against each BD's daily capacity - one unit, one axis. */
 export function BdLoadChart({ data }) {
   const rows = data.map((d) => ({ ...d, headroom: Math.max(0, d.capacity - d.assigned) }));
 
   return (
     <ChartBlock
-      title="How the work is spread"
-      sub="Leads currently assigned against each BD's capacity for the day"
-      height={Math.max(240, rows.length * 28 + 36)}
+      title="BD Workload Distribution"
+      sub="Assigned leads vs daily capacity"
+      height={Math.max(300, rows.length * 36 + 40)}
       columns={['BD', 'Assigned', 'Capacity', 'Utilisation %']}
       rows={rows.map((r) => [r.name, r.assigned, r.capacity, r.utilisation])}
     >
@@ -248,12 +225,12 @@ export function BdLoadChart({ data }) {
         <BarChart
           data={rows}
           layout="vertical"
-          margin={{ top: 2, right: 12, bottom: 2, left: 2 }}
-          barCategoryGap={5}
+          margin={{ top: 4, right: 20, bottom: 4, left: 4 }}
+          barCategoryGap={6}
         >
           <CartesianGrid horizontal={false} stroke={RULE} strokeDasharray="0" />
           <XAxis type="number" tick={AXIS} axisLine={{ stroke: RULE }} tickLine={false} allowDecimals={false} />
-          <YAxis type="category" dataKey="name" width={150} tick={AXIS} axisLine={false} tickLine={false} />
+          <YAxis type="category" dataKey="name" width={160} tick={AXIS} axisLine={false} tickLine={false} />
           <Tooltip
             cursor={{ fill: 'var(--color-panel)' }}
             content={(p) => (
@@ -261,26 +238,22 @@ export function BdLoadChart({ data }) {
                 {...p}
                 render={(d) => (
                   <>
-                    <p>
-                      {d.assigned} of {d.capacity} slots used · {d.utilisation}%
-                    </p>
+                    <p><strong>{d.assigned}</strong> of {d.capacity} slots ({d.utilisation}%)</p>
                     <p>{d.languages.map(languageLabel).join(' · ')}</p>
                   </>
                 )}
               />
             )}
           />
-          {/* Stacked against remaining headroom: the same unit, so this is a
-              capacity track rather than a second scale. */}
-          <Bar dataKey="assigned" stackId="load" fill={DATA} barSize={11} isAnimationActive={false} />
+          <Bar dataKey="assigned" stackId="load" fill={DATA} barSize={16} isAnimationActive={false} />
           <Bar
             dataKey="headroom"
             stackId="load"
-            fill="var(--color-rule)"
+            fill={RULE}
             stroke="var(--color-paper)"
             strokeWidth={2}
-            barSize={11}
-            radius={[0, 3, 3, 0]}
+            barSize={16}
+            radius={[0, 4, 4, 0]}
             isAnimationActive={false}
           />
         </BarChart>
@@ -289,7 +262,6 @@ export function BdLoadChart({ data }) {
   );
 }
 
-/** Call outcomes. One colour, with the outcome that matters flagged in red. */
 export function OutcomeChart({ outcomeCounts }) {
   const rows = Object.entries(outcomeCounts)
     .map(([code, count]) => ({ code, name: OUTCOME_LABELS[code] ?? code, count }))
@@ -299,9 +271,9 @@ export function OutcomeChart({ outcomeCounts }) {
 
   return (
     <ChartBlock
-      title="What happened on the calls"
-      sub="Every logged call outcome"
-      height={Math.max(200, rows.length * 32 + 36)}
+      title="Call Outcomes"
+      sub="Results of all logged calls"
+      height={Math.max(260, rows.length * 40 + 40)}
       columns={['Outcome', 'Calls']}
       rows={rows.map((r) => [r.name, r.count])}
     >
@@ -309,21 +281,21 @@ export function OutcomeChart({ outcomeCounts }) {
         <BarChart
           data={rows}
           layout="vertical"
-          margin={{ top: 2, right: 28, bottom: 2, left: 2 }}
-          barCategoryGap={7}
+          margin={{ top: 4, right: 50, bottom: 4, left: 4 }}
+          barCategoryGap={8}
         >
           <CartesianGrid horizontal={false} stroke={RULE} strokeDasharray="0" />
           <XAxis type="number" tick={AXIS} axisLine={{ stroke: RULE }} tickLine={false} allowDecimals={false} />
-          <YAxis type="category" dataKey="name" width={118} tick={AXIS} axisLine={false} tickLine={false} />
+          <YAxis type="category" dataKey="name" width={140} tick={AXIS} axisLine={false} tickLine={false} />
           <Tooltip
             cursor={{ fill: 'var(--color-panel)' }}
-            content={(p) => <TooltipBox {...p} render={(d) => <p>{d.count} calls</p>} />}
+            content={(p) => <TooltipBox {...p} render={(d) => <p><strong>{d.count}</strong> calls</p>} />}
           />
-          <Bar dataKey="count" radius={[0, 3, 3, 0]} barSize={13} isAnimationActive={false}>
+          <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={18} isAnimationActive={false}>
             {rows.map((r) => (
-              <Cell key={r.code} fill={r.code === 'language_barrier' ? PROBLEM : DATA} />
+              <Cell key={r.code} fill={r.code === 'language_barrier' ? INK : DATA} />
             ))}
-            <LabelList dataKey="count" position="right" fontSize={11} fill="var(--color-ink-3)" />
+            <LabelList dataKey="count" position="right" fontSize={14} fill={INK_2} />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -331,25 +303,20 @@ export function OutcomeChart({ outcomeCounts }) {
   );
 }
 
-/**
- * Part-to-whole across the pipeline: a single stacked bar, not a donut.
- * The three pipeline stages are ordered, so they take an ordinal one-hue ramp;
- * "no BD available" is a problem state, so it is red. Every segment is
- * direct-labelled below with its count.
- */
 export function PipelineBar({ statusCounts }) {
   const order = [
-    { key: 'new', color: 'var(--color-stage-1)' },
-    { key: 'assigned', color: 'var(--color-stage-2)' },
-    { key: 'contacted', color: 'var(--color-stage-3)' },
-    { key: 'unroutable', color: PROBLEM },
+    { key: 'new', color: DATA_LIGHTER, label: 'Waiting' },
+    { key: 'assigned', color: DATA_LIGHT, label: 'Assigned' },
+    { key: 'contacted', color: DATA, label: 'Contacted' },
+    { key: 'unroutable', color: INK, label: 'No BD' },
   ];
   const total = order.reduce((s, o) => s + (statusCounts[o.key] ?? 0), 0);
   if (!total) return null;
 
   return (
-    <div>
-      <div className="flex h-2 w-full gap-[2px] overflow-hidden rounded-full">
+    <div className="rounded-xl border border-rule bg-white p-6">
+      {/* Bar */}
+      <div className="flex h-6 w-full gap-1 overflow-hidden rounded-full">
         {order.map((o) => {
           const count = statusCounts[o.key] ?? 0;
           if (!count) return null;
@@ -357,23 +324,26 @@ export function PipelineBar({ statusCounts }) {
             <div
               key={o.key}
               style={{ width: (count / total) * 100 + '%', background: o.color }}
+              className="transition-all"
               title={STATUS_LABELS[o.key] + ': ' + count}
             />
           );
         })}
       </div>
-      <ul className="mt-4 flex flex-wrap gap-x-7 gap-y-2">
+      
+      {/* Legend */}
+      <ul className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
         {order.map((o) => {
           const count = statusCounts[o.key] ?? 0;
           return (
-            <li key={o.key} className="flex items-center gap-2 text-[12px]">
+            <li key={o.key} className="flex items-center gap-3">
               <span
-                className="h-2 w-2 shrink-0 rounded-full"
+                className="h-4 w-4 shrink-0 rounded-full"
                 style={{ background: o.color }}
                 aria-hidden="true"
               />
-              <span className="text-ink-2">{STATUS_LABELS[o.key]}</span>
-              <span className="tabular font-medium text-ink">{count}</span>
+              <span className="text-[15px] text-ink-2">{o.label || STATUS_LABELS[o.key]}</span>
+              <span className="text-[17px] font-bold text-ink">{count}</span>
             </li>
           );
         })}

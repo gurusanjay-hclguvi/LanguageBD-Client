@@ -1,30 +1,28 @@
 import { useEffect } from 'react';
 import { languageLabel, STATUS_LABELS } from '../lib/format.js';
 
-/** Page title, one line of context, and the page's actions on the same baseline. */
 export function PageHeader({ title, sub, actions }) {
   return (
-    <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
       <div className="max-w-2xl">
-        <h1 className="text-[22px] font-semibold text-ink">{title}</h1>
-        {sub && <p className="mt-1.5 text-[13px] leading-relaxed text-ink-2">{sub}</p>}
+        <h1 className="text-[30px] font-semibold tracking-[-0.02em] text-ink">{title}</h1>
+        {sub && <p className="mt-2.5 text-[16px] leading-relaxed text-ink-3">{sub}</p>}
       </div>
-      {actions && <div className="flex gap-2">{actions}</div>}
+      {actions && <div className="flex gap-3">{actions}</div>}
     </div>
   );
 }
 
-/** A block of content, separated from its neighbours by a rule and space. */
 export function Section({ title, sub, actions, children, className = '' }) {
   return (
-    <section className={'border-t border-rule pt-6 ' + className}>
+    <section className={'border-t border-rule pt-10 ' + className}>
       {(title || actions) && (
-        <div className="mb-5 flex items-start justify-between gap-6">
+        <div className="mb-8 flex items-start justify-between gap-6">
           <div>
-            {title && <h2 className="text-[13px] font-semibold text-ink">{title}</h2>}
-            {sub && <p className="mt-0.5 max-w-xl text-[12px] leading-relaxed text-ink-3">{sub}</p>}
+            {title && <h2 className="text-[20px] font-semibold tracking-[-0.01em] text-ink">{title}</h2>}
+            {sub && <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-ink-3">{sub}</p>}
           </div>
-          {actions && <div className="flex shrink-0 gap-2">{actions}</div>}
+          {actions && <div className="flex shrink-0 gap-3">{actions}</div>}
         </div>
       )}
       {children}
@@ -32,14 +30,9 @@ export function Section({ title, sub, actions, children, className = '' }) {
   );
 }
 
-/**
- * Headline figures, separated by hairlines rather than sitting in boxes.
- * `tone="critical"` is the only colour available here, and it is for the one
- * number that represents a problem.
- */
 export function StatRow({ children }) {
   return (
-    <div className="grid grid-cols-2 gap-y-6 border-y border-rule py-6 md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-y-8 border-y border-rule py-8 md:grid-cols-4">
       {children}
     </div>
   );
@@ -47,71 +40,58 @@ export function StatRow({ children }) {
 
 export function Stat({ label, value, unit, hint, tone = 'neutral' }) {
   return (
-    <div className="px-5 first:pl-0 md:border-l md:border-rule md:first:border-l-0">
-      <p className="text-[11px] uppercase tracking-[0.07em] text-ink-3">{label}</p>
-      <p
-        className={
-          'mt-2 text-[30px] font-medium leading-none ' +
-          (tone === 'critical' ? 'text-critical' : 'text-ink')
-        }
-      >
+    <div className="px-6 first:pl-0 md:border-l md:border-rule md:first:border-l-0">
+      <p className="text-[13px] font-semibold uppercase tracking-[0.04em] text-ink-3">{label}</p>
+      <p className={'mt-3 text-[40px] font-semibold leading-none tracking-[-0.02em] text-ink'}>
         {value}
-        {unit && <span className="ml-0.5 text-[15px] text-ink-3">{unit}</span>}
+        {unit && <span className="ml-1 text-[20px] font-normal text-ink-3">{unit}</span>}
       </p>
-      {hint && <p className="mt-2 text-[12px] leading-snug text-ink-3">{hint}</p>}
+      {hint && <p className="mt-3 text-[15px] leading-snug text-ink-3">{hint}</p>}
     </div>
   );
 }
 
-/**
- * Languages as plain text, primary one emphasised. No chips: a wall of coloured
- * pills tells you less than weight and order do.
- */
 export function Languages({ codes = [], className = '' }) {
-  if (!codes.length) return <span className="text-ink-3">-</span>;
+  if (!codes.length) return <span className="text-[16px] text-ink-3">-</span>;
   return (
-    <span className={'text-[13px] ' + className}>
-      <span className="font-medium text-ink">{languageLabel(codes[0])}</span>
+    <span className={'text-[16px] ' + className}>
+      <span className="font-bold text-ink">{languageLabel(codes[0])}</span>
       {codes.length > 1 && (
-        <span className="text-ink-3"> · {codes.slice(1).map(languageLabel).join(' · ')}</span>
+        <span className="text-ink-2 font-normal text-[15px]"> · {codes.slice(1).map(languageLabel).join(' · ')}</span>
       )}
     </span>
   );
 }
 
-/**
- * Where a lead's language came from. Words, not colour - a guess must never be
- * able to pass for something the learner actually told us.
- */
 export function Source({ source }) {
-  const label = { explicit: 'declared', inferred: 'inferred', unknown: 'unknown' }[source] ?? source;
-  return (
-    <span
-      className={
-        'text-[12px] ' + (source === 'explicit' ? 'text-ink-2' : 'text-ink-3 italic')
-      }
-    >
-      {label}
-    </span>
-  );
+  const label =
+    { confirmed: 'confirmed', explicit: 'declared', inferred: 'inferred', unknown: 'unknown' }[
+      source
+    ] ?? source;
+
+  const tone = {
+    confirmed: 'font-bold text-accent',
+    explicit: 'font-semibold text-ink-2',
+  }[source] ?? 'text-ink-3 italic';
+
+  return <span className={'text-[15px] ' + tone}>{label}</span>;
 }
 
 export function Status({ status }) {
-  const critical = status === 'unroutable';
+  const isWarning = status === 'unroutable';
   return (
-    <span className={'text-[13px] ' + (critical ? 'font-medium text-critical' : 'text-ink-2')}>
+    <span className={'text-[16px] font-semibold ' + (isWarning ? 'text-ink' : 'text-ink-2')}>
       {STATUS_LABELS[status] ?? status}
     </span>
   );
 }
 
-/** A score out of 100 with a hairline meter. The number is always readable. */
 export function Score({ score }) {
-  if (score == null) return <span className="text-ink-3">-</span>;
+  if (score == null) return <span className="text-[16px] text-ink-3">-</span>;
   return (
-    <span className="flex items-center gap-2.5">
-      <span className="tabular text-[13px] font-medium text-ink">{score}</span>
-      <span className="h-[3px] w-12 rounded-full bg-rule">
+    <span className="flex items-center gap-3">
+      <span className="tabular text-[18px] font-bold text-ink">{score}</span>
+      <span className="h-[5px] w-20 rounded-full bg-rule">
         <span
           className="block h-full rounded-full bg-accent"
           style={{ width: Math.max(4, Math.min(100, score)) + '%' }}
@@ -121,31 +101,23 @@ export function Score({ score }) {
   );
 }
 
-/**
- * An inline message. A left rule carries the weight; colour is used only when
- * the message is about an unservable learner.
- */
 export function Note({ tone = 'neutral', title, children, onClose }) {
-  const accentRule = {
-    neutral: 'border-ink',
-    critical: 'border-critical',
-  }[tone];
+  const bgClass = tone === 'ok' ? 'bg-green-50' : 'bg-panel';
+  const borderClass = tone === 'critical' ? 'border-l-4 border-ink' : tone === 'ok' ? 'border-l-4 border-green-500' : 'border-l-4 border-accent';
 
   return (
-    <div className={'flex items-start justify-between gap-6 border-l-2 py-1 pl-4 ' + accentRule}>
-      <div className="text-[13px] leading-relaxed">
+    <div className={'flex items-start justify-between gap-6 py-4 pl-5 pr-4 rounded-r-lg ' + bgClass + ' ' + borderClass}>
+      <div className="text-[16px] leading-relaxed">
         {title && (
-          <p className={'font-medium ' + (tone === 'critical' ? 'text-critical' : 'text-ink')}>
-            {title}
-          </p>
+          <p className={'font-semibold text-ink'}>{title}</p>
         )}
-        {children && <div className="text-ink-2">{children}</div>}
+        {children && <div className="text-[15px] text-ink-2 mt-1">{children}</div>}
       </div>
       {onClose && (
         <button
           type="button"
           onClick={onClose}
-          className="shrink-0 text-[12px] text-ink-3 hover:text-ink"
+          className="shrink-0 text-[15px] font-medium text-ink-3 hover:text-ink transition-colors"
         >
           Dismiss
         </button>
@@ -154,7 +126,7 @@ export function Note({ tone = 'neutral', title, children, onClose }) {
   );
 }
 
-export function Modal({ open, title, sub, onClose, children, width = 'max-w-lg' }) {
+export function Modal({ open, title, sub, onClose, children, width = 'max-w-xl' }) {
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => e.key === 'Escape' && onClose();
@@ -164,28 +136,30 @@ export function Modal({ open, title, sub, onClose, children, width = 'max-w-lg' 
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/30 p-4 sm:p-10">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink/25 p-4 backdrop-blur-[2px] animate-overlay-in sm:p-10">
       <div
         className={
-          'w-full rounded-lg border border-rule bg-paper shadow-[0_16px_50px_rgba(0,0,0,0.18)] ' +
+          'animate-modal-in w-full rounded-2xl border border-rule bg-white shadow-[0_20px_50px_-12px_rgba(20,22,26,0.25)] ' +
           width
         }
       >
-        <header className="flex items-start justify-between gap-6 border-b border-rule px-6 py-4">
+        <header className="flex items-start justify-between gap-6 border-b border-rule px-7 py-5">
           <div>
-            <h2 className="text-[14px] font-semibold text-ink">{title}</h2>
-            {sub && <p className="mt-0.5 text-[12px] text-ink-3">{sub}</p>}
+            <h2 className="text-[19px] font-semibold tracking-[-0.01em] text-ink">{title}</h2>
+            {sub && <p className="mt-1.5 text-[15px] text-ink-3">{sub}</p>}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-[12px] text-ink-3 hover:text-ink"
             aria-label="Close"
+            className="-mr-1.5 -mt-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-panel hover:text-ink"
           >
-            Close
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+              <path d="M1 1L14 14M14 1L1 14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
           </button>
         </header>
-        <div className="px-6 py-5">{children}</div>
+        <div className="px-7 py-6">{children}</div>
       </div>
     </div>
   );
@@ -193,15 +167,20 @@ export function Modal({ open, title, sub, onClose, children, width = 'max-w-lg' 
 
 export function Empty({ title, children }) {
   return (
-    <div className="border-t border-rule py-16 text-center">
-      <p className="text-[13px] font-medium text-ink">{title}</p>
+    <div className="border-t border-rule py-20 text-center">
+      <p className="text-[20px] font-bold text-ink">{title}</p>
       {children && (
-        <p className="mx-auto mt-1.5 max-w-sm text-[12px] leading-relaxed text-ink-3">{children}</p>
+        <p className="mx-auto mt-3 max-w-sm text-[17px] leading-relaxed text-ink-3">{children}</p>
       )}
     </div>
   );
 }
 
 export function Loading({ label = 'Loading' }) {
-  return <p className="py-20 text-center text-[13px] text-ink-3">{label}...</p>;
+  return (
+    <div className="py-20 text-center">
+      <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-accent border-t-transparent" />
+      <p className="mt-5 text-[17px] text-ink-3">{label}...</p>
+    </div>
+  );
 }

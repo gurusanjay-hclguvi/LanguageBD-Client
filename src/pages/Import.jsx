@@ -1,20 +1,18 @@
 import { useRef, useState } from 'react';
 import { api, apiUrl } from '../api.js';
-import { Languages, Note, PageHeader, Section, Source } from '../components/ui.jsx';
+import { Languages, Note, PageHeader, Section, Source, Loading } from '../components/ui.jsx';
 
 export default function Import() {
   const inputRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
-  const [routed, setRouted] = useState(null);
   const [error, setError] = useState(null);
 
   async function upload(file) {
     if (!file) return;
     setBusy(true);
     setError(null);
-    setRouted(null);
     try {
       setResult(await api.importCsv(file));
     } catch (err) {
@@ -25,125 +23,62 @@ export default function Import() {
     }
   }
 
-  async function routeBatch() {
-    setBusy(true);
-    try {
-      setRouted(await api.runRouting());
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
   const blocking = result?.errors?.filter((e) => e.severity !== 'warning') ?? [];
   const warnings = result?.errors?.filter((e) => e.severity === 'warning') ?? [];
 
   return (
     <div>
-      <PageHeader
-        title="Import leads"
-        sub="Drop in a CSV export. Rows without a language are not rejected — their region is used to work out what they most likely speak."
-        actions={
-          <a className="btn" href={apiUrl('/leads/template.csv')}>
-            Download template
-          </a>
-        }
-      />
+      <PageHeader title="Import Leads" sub="Upload a CSV. Missing languages will be inferred from region." actions={<a className="btn" href={apiUrl('/leads/template.csv')}>Download Template</a>} />
 
-      {error && (
-        <div className="mb-8">
-          <Note tone="critical" title="Import failed" onClose={() => setError(null)}>
-            {error}
-          </Note>
+      {error && <div className="mb-8"><Note tone="critical" title="Import failed" onClose={() => setError(null)}>{error}</Note></div>}
+
+      {busy && <Loading label="Processing" />}
+
+      <div onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)}
+        onDrop={(e) => { e.preventDefault(); setDragging(false); upload(e.dataTransfer.files?.[0]); }}
+        className={'flex flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dashed px-8 py-16 text-center transition-all ' + (dragging ? 'border-accent bg-accent-light' : 'border-rule bg-white hover:border-accent')}>
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent-light">
+          <svg className="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
         </div>
-      )}
-
-      <div
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragging(false);
-          upload(e.dataTransfer.files?.[0]);
-        }}
-        className={
-          'flex flex-col items-center gap-4 rounded-md border border-dashed px-6 py-16 text-center transition-colors ' +
-          (dragging ? 'border-ink bg-panel' : 'border-rule')
-        }
-      >
         <div>
-          <p className="text-[14px] font-medium text-ink">Drop a CSV here</p>
-          <p className="mt-1 text-[12px] text-ink-3">
-            name, phone, email, city, state, course, preferred_languages
-          </p>
+          <p className="text-[18px] font-bold text-ink">Drop a CSV file here</p>
+          <p className="mt-2 text-[15px] text-ink-3">name, phone, email, city, state, course, preferred_languages</p>
         </div>
-        <button type="button" className="btn btn-primary" onClick={() => inputRef.current?.click()} disabled={busy}>
-          {busy ? 'Working…' : 'Choose a file'}
-        </button>
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".csv,text/csv"
-          className="hidden"
-          onChange={(e) => upload(e.target.files?.[0])}
-        />
+        <button className="btn btn-primary" onClick={() => inputRef.current?.click()} disabled={busy}>{busy ? 'Processing...' : 'Choose File'}</button>
+        <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => upload(e.target.files?.[0])} />
       </div>
 
-      {result && (
-        <div className="mt-12 space-y-12">
-          <section>
-            <div className="grid grid-cols-3 border-y border-rule py-6">
-              {[
-                { label: 'Rows read', value: result.rows, tone: 'neutral' },
-                { label: 'Leads created', value: result.inserted, tone: 'neutral' },
-                { label: 'Rows skipped', value: result.skipped, tone: result.skipped ? 'critical' : 'neutral' },
-              ].map((s) => (
-                <div key={s.label} className="px-6 first:pl-0 [&:not(:first-child)]:border-l [&:not(:first-child)]:border-rule">
-                  <p className="text-[11px] uppercase tracking-[0.07em] text-ink-3">{s.label}</p>
-                  <p
-                    className={
-                      'mt-2 text-[30px] font-medium leading-none ' +
-                      (s.tone === 'critical' ? 'text-critical' : 'text-ink')
-                    }
-                  >
-                    {s.value}
-                  </p>
+      {result && !busy && (
+        <div className="mt-10 space-y-10">
+          <section className="rounded-xl border border-rule bg-white p-6">
+            <h2 className="text-[18px] font-bold text-ink">Results</h2>
+            <div className="mt-6 grid grid-cols-3 gap-6">
+              {[{ label: 'Rows Read', value: result.rows }, { label: 'Created', value: result.inserted }, { label: 'Skipped', value: result.skipped }].map((s) => (
+                <div key={s.label} className="rounded-lg bg-panel p-5">
+                  <p className="text-[13px] font-semibold uppercase tracking-[0.05em] text-ink-3">{s.label}</p>
+                  <p className="mt-2 text-[36px] font-bold leading-none text-ink">{s.value}</p>
                 </div>
               ))}
             </div>
-
-            <div className="mt-6">
-              {routed ? (
-                <Note title="Batch routed">
-                  {routed.assigned} leads matched to a BD.
-                  {routed.unroutable > 0 &&
-                    ' ' + routed.unroutable + ' still have nobody on the roster who speaks their language.'}
+            {result.routing && (
+              <div className="mt-6">
+                <Note title="Routed automatically">
+                  {result.routing.assigned} of {result.inserted} leads matched to a BD
+                  {result.routing.unroutable > 0 && ' - ' + result.routing.unroutable + ' need a language or capacity you don\'t have yet'}.
                 </Note>
-              ) : (
-                result.inserted > 0 && (
-                  <button type="button" className="btn btn-primary" onClick={routeBatch} disabled={busy}>
-                    Route these leads now
-                  </button>
-                )
-              )}
-            </div>
+              </div>
+            )}
           </section>
 
           {(blocking.length > 0 || warnings.length > 0) && (
-            <Section title="Rows that needed attention" sub="A bad row never fails the whole batch">
-              <ul className="border-t border-rule">
+            <Section title="Rows with Issues" sub="Bad rows don't fail the batch">
+              <ul className="space-y-2">
                 {[...blocking, ...warnings].map((e, i) => (
-                  <li key={i} className="border-b border-rule py-3 text-[13px]">
-                    <span className="mr-3 text-[12px] uppercase tracking-[0.07em] text-ink-3">
-                      Row {e.row}
-                    </span>
-                    <span className={e.severity === 'warning' ? 'text-ink-2' : 'text-critical'}>
-                      {e.error}
-                    </span>
+                  <li key={i} className="rounded-lg border border-rule bg-white p-4">
+                    <span className="inline-flex items-center rounded-full bg-panel px-2.5 py-0.5 text-[12px] font-semibold uppercase text-ink-3">Row {e.row}</span>
+                    <span className="ml-3 text-[15px] text-ink">{e.error}</span>
                   </li>
                 ))}
               </ul>
@@ -151,34 +86,24 @@ export default function Import() {
           )}
 
           {result.preview.length > 0 && (
-            <Section
-              title="What we worked out about these learners"
-              sub="First few rows, showing the language the router will match on"
-            >
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px]">
-                  <thead>
+            <Section title="Inferred Languages" sub="First few rows">
+              <div className="overflow-hidden rounded-xl border border-rule bg-white">
+                <table className="w-full">
+                  <thead className="bg-panel">
                     <tr>
-                      <th className="th">Learner</th>
-                      <th className="th">Location</th>
-                      <th className="th">Languages</th>
-                      <th className="th pr-0">Source</th>
+                      <th className="th px-5 py-4">Learner</th>
+                      <th className="th px-5 py-4">Location</th>
+                      <th className="th px-5 py-4">Languages</th>
+                      <th className="th px-5 py-4">Source</th>
                     </tr>
                   </thead>
                   <tbody>
                     {result.preview.map((row, i) => (
-                      <tr key={i}>
-                        <td className="td font-medium text-ink">{row.name}</td>
-                        <td className="td">{[row.city, row.state].filter(Boolean).join(', ') || '-'}</td>
-                        <td className="td">
-                          <Languages codes={row.languages} />
-                        </td>
-                        <td className="td pr-0">
-                          <Source source={row.languageSource} />
-                          <span className="mt-0.5 block max-w-xs text-[12px] leading-snug text-ink-3">
-                            {row.languageBasis}
-                          </span>
-                        </td>
+                      <tr key={i} className="border-t border-rule">
+                        <td className="td px-5 py-4 font-semibold text-ink">{row.name}</td>
+                        <td className="td px-5 py-4 text-ink-2">{[row.city, row.state].filter(Boolean).join(', ') || '-'}</td>
+                        <td className="td px-5 py-4"><Languages codes={row.languages} /></td>
+                        <td className="td px-5 py-4"><Source source={row.languageSource} /></td>
                       </tr>
                     ))}
                   </tbody>

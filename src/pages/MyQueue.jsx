@@ -3,22 +3,36 @@ import { api } from '../api.js';
 import { useRole } from '../context/RoleContext.jsx';
 import { useAsync } from '../lib/useAsync.js';
 import { Empty, Languages, Loading, Modal, Note, PageHeader, Source } from '../components/ui.jsx';
-import { effectiveLanguages, languageLabel, OUTCOME_LABELS } from '../lib/format.js';
+import { effectiveLanguages, languageLabel, LANGUAGE_LABELS, OUTCOME_LABELS } from '../lib/format.js';
 
 const OUTCOMES = ['connected', 'converted', 'not_interested', 'no_answer', 'language_barrier'];
+const LANGUAGE_OPTIONS = Object.entries(LANGUAGE_LABELS);
 
 function LogCallModal({ lead, bdId, onClose, onLogged }) {
   const [outcome, setOutcome] = useState('connected');
+  const [observed, setObserved] = useState([]);
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
+  const barrier = outcome === 'language_barrier';
+
+  function toggleObserved(code) {
+    setObserved((current) =>
+      current.includes(code) ? current.filter((c) => c !== code) : [...current, code],
+    );
+  }
+
   async function submit(e) {
     e.preventDefault();
+    if (barrier && !observed.length) {
+      setError('Please select the language the learner actually speaks.');
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
-      await api.logCall({ leadId: lead._id, bdId, outcome, notes });
+      await api.logCall({ leadId: lead._id, bdId, outcome, notes, observedLanguages: observed });
       onLogged(outcome);
       onClose();
     } catch (err) {
@@ -29,16 +43,20 @@ function LogCallModal({ lead, bdId, onClose, onLogged }) {
   }
 
   return (
-    <Modal open onClose={onClose} title={'Log a call with ' + lead.name} sub={lead.phone || 'no phone on file'}>
-      <form onSubmit={submit} className="space-y-5">
+    <Modal open onClose={onClose} title={'Log a call with ' + lead.name} sub={lead.phone || 'No phone number'}>
+      <form onSubmit={submit} className="space-y-6">
         {error && <Note tone="critical">{error}</Note>}
+        
         <fieldset>
           <legend className="label">How did the call go?</legend>
-          <div className="mt-3 divide-y divide-rule border-y border-rule">
+          <div className="mt-3 space-y-1 rounded-xl border border-rule bg-white p-2">
             {OUTCOMES.map((code) => (
               <label
                 key={code}
-                className="flex cursor-pointer items-center gap-3 py-2.5 text-[13px] text-ink"
+                className={
+                  'flex cursor-pointer items-center gap-3 rounded-lg px-4 py-3 transition-colors ' +
+                  (outcome === code ? 'bg-accent-light' : 'hover:bg-panel')
+                }
               >
                 <input
                   type="radio"
@@ -46,33 +64,67 @@ function LogCallModal({ lead, bdId, onClose, onLogged }) {
                   value={code}
                   checked={outcome === code}
                   onChange={() => setOutcome(code)}
-                  className="accent-ink"
+                  className="h-5 w-5 accent-accent"
                 />
-                {OUTCOME_LABELS[code]}
-                {code === 'language_barrier' && (
-                  <span className="ml-auto text-[12px] text-ink-3">
-                    sends the lead back for re-routing
-                  </span>
-                )}
+                <div className="flex-1">
+                  <span className="text-[15px] font-medium text-ink">{OUTCOME_LABELS[code]}</span>
+                  {code === 'language_barrier' && (
+                    <span className="ml-2 text-[13px] text-ink">(sends back for re-routing)</span>
+                  )}
+                </div>
               </label>
             ))}
           </div>
         </fieldset>
-        <label className="label block">
-          Notes
+
+        <fieldset>
+          <legend className="label">
+            {barrier ? 'What language did they speak?' : 'Language heard on the call'}
+          </legend>
+          <p className="mt-2 text-[14px] leading-relaxed text-ink-2">
+            {barrier
+              ? 'Required. This helps route them to the right BD next time.'
+              : 'Optional - record if different from what we have.'}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {LANGUAGE_OPTIONS.map(([code, label]) => {
+              const on = observed.includes(code);
+              return (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => toggleObserved(code)}
+                  className={
+                    'rounded-lg px-4 py-2 text-[14px] font-medium transition-all ' +
+                    (on
+                      ? 'bg-accent text-white'
+                      : 'border border-rule bg-white text-ink-2 hover:border-accent')
+                  }
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+
+        <label className="block">
+          <span className="label">Notes (optional)</span>
           <textarea
-            className="field mt-1.5 h-auto py-2"
+            className="field mt-2"
             rows={3}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
+            placeholder="Add notes about the call..."
           />
         </label>
-        <div className="flex justify-end gap-2 border-t border-rule pt-4">
+
+        <div className="flex justify-end gap-3 border-t border-rule pt-5">
           <button type="button" className="btn" onClick={onClose}>
             Cancel
           </button>
           <button type="submit" className="btn btn-primary" disabled={busy}>
-            {busy ? 'Saving…' : 'Save outcome'}
+            {busy ? 'Saving...' : 'Save Outcome'}
           </button>
         </div>
       </form>
@@ -102,20 +154,16 @@ export default function MyQueue() {
   const { bd, leads } = data;
 
   return (
-    <div className={'transition-opacity ' + (refreshing ? 'opacity-50' : '')}>
+    <div className={'transition-opacity duration-200 ' + (refreshing ? 'opacity-50' : '')}>
       <PageHeader
-        title={isAdmin ? bd.name + '’s queue' : 'My queue'}
-        sub={
-          'Every learner here shares a language with you: ' +
-          bd.languages.map((l) => languageLabel(l.code)).join(', ') +
-          '.'
-        }
+        title={isAdmin ? bd.name + "'s Queue" : 'My Queue'}
+        sub={'Every learner here shares a language with you: ' + bd.languages.map((l) => languageLabel(l.code)).join(', ') + '.'}
       />
 
       {isAdmin && (
         <div className="mb-8">
-          <Note title="You are viewing a BD’s queue as the admin">
-            Switch to {bd.name} from the menu at the top right to see it as they do.
+          <Note title="You are viewing a BD's queue as the admin">
+            Switch to {bd.name} from the menu at the top right.
           </Note>
         </div>
       )}
@@ -128,68 +176,70 @@ export default function MyQueue() {
             onClose={() => setNotice(null)}
           >
             {notice.outcome === 'language_barrier'
-              ? 'That lead has been returned to the pool so routing can try a different BD.'
-              : 'It is now in the call log and on the overview.'}
+              ? 'Lead returned to the pool for re-routing.'
+              : 'Call logged successfully.'}
           </Note>
         </div>
       )}
 
       {!leads.length ? (
         <Empty title="Nothing in your queue">
-          Nothing is assigned to you right now. An admin can run routing to distribute the waiting
-          leads.
+          Nothing is assigned to you right now. An admin can run routing to distribute leads.
         </Empty>
       ) : (
-        <ul className="border-t border-rule">
+        <div className="space-y-4">
           {leads.map((lead) => (
-            /* A grid, not flex-wrap: the columns must line up down the list
-               rather than shifting with the length of each learner's name. */
-            <li
+            <div
               key={lead._id}
-              className="grid items-start gap-x-8 gap-y-4 border-b border-rule py-6 sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_auto]"
+              className="rounded-xl border border-rule bg-white p-6 transition-shadow hover:shadow-md"
             >
-              <div>
-                <p className="text-[15px] font-medium text-ink">
-                  {lead.name}
-                  {lead.status === 'contacted' && (
-                    <span className="ml-2 text-[11px] font-normal uppercase tracking-[0.07em] text-ink-3">
-                      called
-                    </span>
-                  )}
-                </p>
-                <p className="mt-0.5 text-[12px] text-ink-3">
-                  {[lead.city, lead.state].filter(Boolean).join(', ') || 'location unknown'}
-                  {lead.course ? ' · ' + lead.course : ''}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.07em] text-ink-3">Open the call in</p>
-                <p className="mt-1 text-[15px] font-medium text-ink">
-                  {languageLabel(lead.speakInLanguage)}
-                </p>
-                <p className="mt-1 flex items-baseline gap-2">
-                  <Languages codes={effectiveLanguages(lead)} />
-                  <Source source={lead.languageSource} />
-                </p>
-                {lead.languageSource !== 'explicit' && (
-                  <p className="mt-1.5 max-w-sm text-[12px] leading-snug text-critical">
-                    Their language was inferred, not declared — confirm it when they pick up.
+              <div className="flex flex-wrap items-start justify-between gap-6">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-[18px] font-bold text-ink">{lead.name}</h3>
+                    {lead.status === 'contacted' && (
+                      <span className="rounded-full bg-accent-light px-2.5 py-0.5 text-[12px] font-semibold text-accent">
+                        Called
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-[14px] text-ink-3">
+                    {[lead.city, lead.state].filter(Boolean).join(', ') || 'Location unknown'}
+                    {lead.course ? ' · ' + lead.course : ''}
                   </p>
-                )}
-              </div>
+                </div>
 
-              <div className="flex items-center gap-2 sm:justify-end">
-                <a className="btn" href={'tel:' + (lead.phone || '')}>
-                  {lead.phone || 'No number'}
-                </a>
-                <button type="button" className="btn btn-primary" onClick={() => setLogging(lead)}>
-                  Log call
-                </button>
+                <div className="min-w-0 flex-1">
+                  <div className="inline-flex items-center gap-2 rounded-lg border border-accent bg-white px-3 py-2">
+                    <span className="text-[13px] font-semibold text-ink">Speak in:</span>
+                    <span className="text-[16px] font-bold text-accent">
+                      {languageLabel(lead.speakInLanguage)}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <Languages codes={effectiveLanguages(lead)} />
+                    <Source source={lead.languageSource} />
+                  </div>
+                  {lead.languageSource !== 'explicit' && lead.languageSource !== 'confirmed' && (
+                    <p className="mt-2 text-[13px] text-ink-3">
+                      Language was inferred - please confirm on call.
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <a className="btn inline-flex items-center justify-center" href={'tel:' + (lead.phone || '')}>
+                    <span className="text-[16px]">📞</span>
+                    <span>{lead.phone || 'No number'}</span>
+                  </a>
+                  <button type="button" className="btn btn-primary" onClick={() => setLogging(lead)}>
+                    Log Call
+                  </button>
+                </div>
               </div>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
 
       {logging && (

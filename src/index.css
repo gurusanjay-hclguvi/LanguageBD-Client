@@ -1,159 +1,122 @@
 @import 'tailwindcss';
 
 /*
- * Design tokens.
- *
- * The palette is deliberately tiny: a neutral ink scale, ONE accent, and red.
- * Accent appears only where data lives (chart marks, meters, links). Red is
- * reserved for the one thing this product exists to surface - a learner nobody
- * on the team can speak to. Nothing else in the UI is coloured, so when
- * something is, it means something.
- *
- * Chart colours are from a validated palette, checked against these exact
- * surfaces in both modes. Dark mode is a selected set of steps, not a flip, and
- * is declared twice: once for the OS setting, once for the in-app toggle.
+ * Design tokens - Clean White & Green theme
+ * Pure white background with green accents for actions.
+ * Black for text. Simple, high contrast, accessible.
  */
+
 @theme {
-  --color-paper: #fbfbfa;
-  --color-panel: #f2f1ed;
-  --color-ink: #131211;
-  --color-ink-2: #5c5a54;
-  --color-ink-3: #8b8982;
-  --color-rule: #e5e4de;
-
-  --color-accent: #2a78d6;
-  --color-critical: #d03b3b;
-
-  /* Pipeline stages are ORDERED, so they take an ordinal one-hue ramp. */
-  --color-stage-1: #86b6ef;
-  --color-stage-2: #3987e5;
-  --color-stage-3: #1c5cab;
-
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --color-paper: #ffffff;
+  --color-panel: #f8f9fa;
+  --color-ink: #14161a;
+  --color-ink-2: #3f4450;
+  --color-ink-3: #797f8c;
+  --color-rule: #e7e8ec;
+  --color-accent: #1f9d5c;
+  --color-accent-hover: #17824c;
+  --color-accent-light: #e7f6ee;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 :root {
-  --caret: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='6' viewBox='0 0 9 6' fill='none'><path d='M1 1.5L4.5 5L8 1.5' stroke='%235c5a54' stroke-width='1.3'/></svg>");
+  --caret: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7' fill='none'><path d='M1 2L5 5.5L9 2' stroke='%233f4450' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    color-scheme: dark;
-    --color-paper: #111110;
-    --color-panel: #1b1b19;
-    --color-ink: #f4f3ef;
-    --color-ink-2: #a5a39a;
-    --color-ink-3: #74726b;
-    --color-rule: #272725;
-
-    --color-accent: #3987e5;
-
-    --color-stage-1: #184f95;
-    --color-stage-2: #3987e5;
-    --color-stage-3: #9ec5f4;
-    --caret: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='6' viewBox='0 0 9 6' fill='none'><path d='M1 1.5L4.5 5L8 1.5' stroke='%23a5a39a' stroke-width='1.3'/></svg>");
-  }
-}
-
-:root[data-theme='dark'] {
-  color-scheme: dark;
-  --color-paper: #111110;
-  --color-panel: #1b1b19;
-  --color-ink: #f4f3ef;
-  --color-ink-2: #a5a39a;
-  --color-ink-3: #74726b;
-  --color-rule: #272725;
-
-  --color-accent: #3987e5;
-
-  --color-stage-1: #184f95;
-  --color-stage-2: #3987e5;
-  --color-stage-3: #9ec5f4;
-  --caret: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='6' viewBox='0 0 9 6' fill='none'><path d='M1 1.5L4.5 5L8 1.5' stroke='%23a5a39a' stroke-width='1.3'/></svg>");
-}
-
-:root[data-theme='light'] {
-  color-scheme: light;
-}
-
-html,
-body,
-#root {
-  height: 100%;
-}
+html, body, #root { height: 100%; }
 
 body {
   margin: 0;
   background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 15.5px;
+  line-height: 1.6;
+  font-feature-settings: 'cv11', 'ss01';
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
-h1,
-h2,
-h3 {
-  letter-spacing: -0.011em;
-}
+h1, h2, h3 { letter-spacing: -0.015em; }
 
 @layer components {
-  /* Structure is carried by rules and space, not by boxes. */
   .btn {
-    @apply inline-flex h-9 items-center gap-1.5 rounded-md border border-rule px-3
-      text-[13px] font-medium text-ink transition-colors hover:bg-panel
-      disabled:cursor-not-allowed disabled:opacity-40;
+    @apply inline-flex h-11 items-center gap-2 rounded-lg border border-rule bg-paper px-5 text-[14.5px] font-medium text-ink-2 transition-all duration-150 ease-out hover:border-ink-3/60 hover:text-ink hover:shadow-[0_1px_2px_rgba(20,22,26,0.06)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
   }
 
-  /* The primary action is ink on paper - the accent stays reserved for data. */
   .btn-primary {
-    @apply border-ink bg-ink text-paper hover:opacity-85;
+    @apply border-accent bg-accent text-white shadow-[0_1px_2px_rgba(20,22,26,0.08)] hover:border-accent-hover hover:bg-accent-hover hover:text-white hover:shadow-[0_2px_6px_rgba(31,157,92,0.25)];
   }
 
   .field {
-    @apply h-9 w-full rounded-md border border-rule bg-transparent px-2.5 text-[13px]
-      text-ink outline-none transition-colors placeholder:text-ink-3 focus:border-ink;
+    @apply h-11 w-full rounded-lg border border-rule bg-paper px-3.5 text-[15px] text-ink outline-none transition-all duration-150 ease-out placeholder:text-ink-3 hover:border-ink-3/50 focus:border-accent focus:shadow-[0_0_0_3.5px_rgba(31,157,92,0.12)];
   }
 
-  /* Native select chrome is the loudest thing on an otherwise quiet page, so
-     the control draws its own caret. The caret colour is a token, because a
-     baked-in hex cannot follow the theme. */
   select.field {
-    @apply appearance-none pr-7;
+    @apply appearance-none pr-10 cursor-pointer;
     background-image: var(--caret);
     background-repeat: no-repeat;
-    background-position: right 0.5rem center;
-    background-size: 9px 6px;
+    background-position: right 14px center;
+    background-size: 10px 7px;
   }
 
   .label {
-    @apply block text-[11px] font-medium uppercase tracking-[0.07em] text-ink-3;
+    @apply block text-[13px] font-semibold uppercase tracking-[0.04em] text-ink-2 mb-2;
   }
 
   .th {
-    @apply pb-2.5 pr-6 text-left text-[11px] font-medium uppercase tracking-[0.07em]
-      text-ink-3;
+    @apply pb-3 pr-6 text-left text-[12.5px] font-semibold uppercase tracking-[0.04em] text-ink-3;
   }
 
   .td {
-    @apply border-t border-rule py-3.5 pr-6 align-top text-[13px] text-ink-2;
+    @apply border-t border-rule py-4 pr-6 align-top text-[15px] text-ink-2;
   }
 
-  /* Columns of figures align vertically, so they take tabular figures.
-     Standalone stat values deliberately do not. */
-  .tabular {
-    font-variant-numeric: tabular-nums;
-  }
+  .tabular { font-variant-numeric: tabular-nums; }
 
   .link {
-    @apply text-accent underline decoration-accent/30 underline-offset-2
-      hover:decoration-accent;
+    @apply text-accent font-medium underline underline-offset-2 decoration-accent/40 transition-colors hover:text-accent-hover hover:decoration-accent-hover;
   }
 }
 
-.recharts-wrapper:focus,
-.recharts-surface:focus {
-  outline: none;
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-rule); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-ink-3); }
+
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+input[type="radio"], input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--color-accent);
 }
+
+textarea.field {
+  height: auto;
+  min-height: 100px;
+  padding-top: 11px;
+  padding-bottom: 11px;
+  line-height: 1.55;
+}
+
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes menu-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-overlay-in { animation: overlay-in 0.15s var(--ease-out); }
+.animate-modal-in { animation: modal-in 0.18s var(--ease-out); }
+.animate-menu-in { animation: menu-in 0.15s var(--ease-out); transform-origin: top right; }

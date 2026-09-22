@@ -94,6 +94,7 @@ export const api = {
 
   runRouting: () => request('/assignments/run', { method: 'POST' }),
   queue: (bdId) => request('/queue/' + bdId),
+  notifications: (bdId, hours = 24) => request('/notifications/' + bdId + '?hours=' + hours),
   logCall: (body) => request('/calls', { method: 'POST', body: JSON.stringify(body) }),
   analytics: () => request('/analytics/summary'),
 };
