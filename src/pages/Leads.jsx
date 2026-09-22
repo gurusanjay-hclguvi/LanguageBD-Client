@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { api } from '../api.js';
 import { useAsync } from '../lib/useAsync.js';
 import { Empty, Languages, Loading, Modal, Note, PageHeader, Score, Source, Status } from '../components/ui.jsx';
-import { effectiveLanguages, languageLabel, LANGUAGE_LABELS, STATUS_LABELS } from '../lib/format.js';
+import { COURSE_OPTIONS, effectiveLanguages, INDIAN_STATES, languageLabel, LANGUAGE_LABELS, STATUS_LABELS } from '../lib/format.js';
 
 const LANGUAGE_OPTIONS = Object.entries(LANGUAGE_LABELS);
 
@@ -122,7 +122,7 @@ function MatchDrawer({ leadId, leadName, hasAssignedBD, leadStatus, onClose, onA
 }
 
 function AddLeadModal({ open, onClose, onCreated }) {
-  const [form, setForm] = useState({ name: '', phone: '', city: '', state: '', course: '', languages: [] });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', city: '', state: '', course: '', languages: [] });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -134,7 +134,7 @@ function AddLeadModal({ open, onClose, onCreated }) {
     setError(null);
     try {
       await api.createLead({ ...form, preferredLanguages: form.languages });
-      setForm({ name: '', phone: '', city: '', state: '', course: '', languages: [] });
+      setForm({ name: '', email: '', phone: '', city: '', state: '', course: '', languages: [] });
       onCreated();
       onClose();
     } catch (err) {
@@ -154,8 +154,12 @@ function AddLeadModal({ open, onClose, onCreated }) {
             <input className="field mt-2" required value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Full name" />
           </label>
           <label className="block">
+            <span className="label">Email</span>
+            <input className="field mt-2" type="email" maxLength="254" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="name@example.com" />
+          </label>
+          <label className="block">
             <span className="label">Phone</span>
-            <input className="field mt-2" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="Phone number" />
+            <input className="field mt-2" type="tel" inputMode="numeric" maxLength="10" minLength="10" pattern="[0-9]{10}" value={form.phone} onChange={(e) => set('phone', e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="10-digit phone number" />
           </label>
           <label className="block">
             <span className="label">City</span>
@@ -163,12 +167,18 @@ function AddLeadModal({ open, onClose, onCreated }) {
           </label>
           <label className="block">
             <span className="label">State</span>
-            <input className="field mt-2" value={form.state} onChange={(e) => set('state', e.target.value)} placeholder="State" />
+            <select className="field mt-2" value={form.state} onChange={(e) => set('state', e.target.value)}>
+              <option value="">Select state</option>
+              {INDIAN_STATES.map((state) => <option key={state} value={state}>{state}</option>)}
+            </select>
           </label>
         </div>
         <label className="block">
           <span className="label">Course Interest</span>
-          <input className="field mt-2" value={form.course} onChange={(e) => set('course', e.target.value)} placeholder="e.g., Full Stack Development" />
+          <select className="field mt-2" value={form.course} onChange={(e) => set('course', e.target.value)}>
+            <option value="">Select course</option>
+            {COURSE_OPTIONS.map((course) => <option key={course} value={course}>{course}</option>)}
+          </select>
         </label>
         <fieldset>
           <legend className="label">Languages Spoken</legend>

@@ -15,6 +15,25 @@ export const LANGUAGE_LABELS = {
   urdu: 'Urdu',
 };
 
+export const INDIAN_STATES = [
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+  'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
+  'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
+  'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
+  'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+  'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Puducherry',
+];
+
+export const COURSE_OPTIONS = [
+  'Full Stack Development',
+  'Data Science',
+  'Digital Marketing',
+  'UI/UX Design',
+  'Cloud Computing',
+  'Cybersecurity',
+  'Other',
+];
+
 export const languageLabel = (code) => LANGUAGE_LABELS[code] ?? code;
 
 export const OUTCOME_LABELS = {

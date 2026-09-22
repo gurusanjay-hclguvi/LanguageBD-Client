@@ -139,11 +139,11 @@ export function Modal({ open, title, sub, onClose, children, width = 'max-w-xl' 
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink/25 p-4 backdrop-blur-[2px] animate-overlay-in sm:p-10">
       <div
         className={
-          'animate-modal-in w-full rounded-2xl border border-rule bg-white shadow-[0_20px_50px_-12px_rgba(20,22,26,0.25)] ' +
+          'animate-modal-in flex max-h-[calc(100vh-2rem)] w-full min-h-0 flex-col rounded-2xl border border-rule bg-white shadow-[0_20px_50px_-12px_rgba(20,22,26,0.25)] ' +
           width
         }
       >
-        <header className="flex items-start justify-between gap-6 border-b border-rule px-7 py-5">
+        <header className="flex shrink-0 items-start justify-between gap-6 border-b border-rule px-7 py-5">
           <div>
             <h2 className="text-[19px] font-semibold tracking-[-0.01em] text-ink">{title}</h2>
             {sub && <p className="mt-1.5 text-[15px] text-ink-3">{sub}</p>}
@@ -159,7 +159,7 @@ export function Modal({ open, title, sub, onClose, children, width = 'max-w-xl' 
             </svg>
           </button>
         </header>
-        <div className="px-7 py-6">{children}</div>
+        <div className="min-h-0 overflow-y-auto px-7 py-6">{children}</div>
       </div>
     </div>
   );

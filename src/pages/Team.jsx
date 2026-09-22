@@ -3,12 +3,12 @@ import { api } from '../api.js';
 import { useRole } from '../context/RoleContext.jsx';
 import { useAsync } from '../lib/useAsync.js';
 import { Loading, Modal, Note, PageHeader } from '../components/ui.jsx';
-import { languageLabel, LANGUAGE_LABELS, titleCase } from '../lib/format.js';
+import { INDIAN_STATES, languageLabel, LANGUAGE_LABELS, titleCase } from '../lib/format.js';
 
 const LANGUAGE_OPTIONS = Object.entries(LANGUAGE_LABELS);
 const PROFICIENCIES = ['native', 'fluent', 'basic'];
 
-const emptyBD = { name: '', email: '', region: '', dailyCapacity: 14, languages: [] };
+const emptyBD = { name: '', email: '', phone: '', region: '', dailyCapacity: 14, languages: [] };
 
 function LanguageEditor({ value, onChange }) {
   const byCode = Object.fromEntries(value.map((l) => [l.code, l.proficiency]));
@@ -75,6 +75,7 @@ function BDModal({ open, initial, onClose, onSaved }) {
       const payload = {
         name: form.name,
         email: form.email,
+        phone: form.phone,
         region: form.region,
         dailyCapacity: Number(form.dailyCapacity) || 1,
         isActive: form.isActive ?? true,
@@ -104,15 +105,22 @@ function BDModal({ open, initial, onClose, onSaved }) {
           </label>
           <label className="block">
             <span className="label">Email</span>
-            <input className="field mt-2" value={form.email ?? ''} onChange={(e) => set('email', e.target.value)} />
+            <input className="field mt-2" type="email" maxLength="254" value={form.email ?? ''} onChange={(e) => set('email', e.target.value)} />
+          </label>
+          <label className="block">
+            <span className="label">Phone</span>
+            <input className="field mt-2" type="tel" inputMode="numeric" maxLength="10" minLength="10" pattern="[0-9]{10}" value={form.phone ?? ''} onChange={(e) => set('phone', e.target.value.replace(/\D/g, '').slice(0, 10))} />
           </label>
           <label className="block">
             <span className="label">Region</span>
-            <input className="field mt-2" value={form.region ?? ''} onChange={(e) => set('region', e.target.value)} />
+            <select className="field mt-2" value={form.region ?? ''} onChange={(e) => set('region', e.target.value)}>
+              <option value="">Select state</option>
+              {INDIAN_STATES.map((state) => <option key={state} value={state}>{state}</option>)}
+            </select>
           </label>
           <label className="block">
             <span className="label">Daily Capacity</span>
-            <input type="number" min="1" className="field mt-2" value={form.dailyCapacity} onChange={(e) => set('dailyCapacity', e.target.value)} />
+            <input type="number" min="1" max="500" step="1" required className="field mt-2" value={form.dailyCapacity} onChange={(e) => set('dailyCapacity', e.target.value)} />
           </label>
         </div>
         <fieldset>
