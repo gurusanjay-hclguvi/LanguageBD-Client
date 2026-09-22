@@ -88,9 +88,13 @@ function TooltipBox({ active, payload, label, render }) {
 }
 
 export function LanguageCoverageChart({ data }) {
-  const rows = data
-    .filter((d) => d.leads > 0)
-    .slice(0, 9)
+  const withLeads = data.filter((d) => d.leads > 0);
+  // Coverage gaps (no BD at all) are the signal this chart exists to surface,
+  // so they always make the cut even if a covered language has more leads.
+  const gaps = withLeads.filter((d) => d.bds === 0);
+  const covered = withLeads.filter((d) => d.bds > 0).slice(0, Math.max(0, 9 - gaps.length));
+  const rows = [...gaps, ...covered]
+    .sort((a, b) => b.leads - a.leads)
     .map((d) => ({
       ...d,
       name: languageLabel(d.code),
