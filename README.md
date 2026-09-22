@@ -1,6 +1,6 @@
-# LinguaRoute — interface
+# Language Matcher — interface
 
-The interface for LinguaRoute, a system that routes learner leads to the Business
+The interface for Language Matcher, a system that routes learner leads to the Business
 Development associate who **actually speaks their language**.
 
 When a Tamil-speaking learner is called by a Hindi-only BD, the call is dead

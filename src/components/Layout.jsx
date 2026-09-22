@@ -14,14 +14,14 @@ const ADMIN_NAV = [
 const BD_NAV = [{ to: '/queue', label: 'My queue', end: true }];
 
 function useTheme() {
-  const [theme, setTheme] = useState(() => localStorage.getItem('linguaroute.theme') || 'system');
+  const [theme, setTheme] = useState(() => localStorage.getItem('language-matcher.theme') || 'system');
 
   useEffect(() => {
     const root = document.documentElement;
     if (theme === 'system') root.removeAttribute('data-theme');
     else root.setAttribute('data-theme', theme);
     try {
-      localStorage.setItem('linguaroute.theme', theme);
+      localStorage.setItem('language-matcher.theme', theme);
     } catch {
       /* private browsing - the app still works, it just forgets the choice */
     }
@@ -122,7 +122,7 @@ export default function Layout({ children }) {
     <div className="min-h-full">
       <header className="sticky top-0 z-30 border-b border-rule bg-paper/90 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-[1140px] items-center gap-8 px-6">
-          <span className="text-[13px] font-semibold tracking-tight text-ink">LinguaRoute</span>
+          <span className="text-[13px] font-semibold tracking-tight text-ink">Language Matcher</span>
 
           <nav className="flex min-w-0 flex-1 items-center gap-6 overflow-x-auto">
             {nav.map(({ to, label, end }) => (

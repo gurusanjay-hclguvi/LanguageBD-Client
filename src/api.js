@@ -12,7 +12,7 @@ export const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '')
 /** Absolute URL for an API path - also used for plain links and downloads. */
 export const apiUrl = (path) => API_BASE + '/api' + path;
 
-const ROLE_KEY = 'linguaroute.role';
+const ROLE_KEY = 'language-matcher.role';
 
 export function readRole() {
   try {
